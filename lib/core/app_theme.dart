@@ -20,6 +20,5 @@ class AppTheme {
           primary: AppColors.accent,
           surface: AppColors.surface,
         ),
-        visualDensity: VisualDensity.standard,
       );
 }

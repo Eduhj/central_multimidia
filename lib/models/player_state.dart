@@ -15,7 +15,6 @@ class TrackInfo {
   final String? artUrl;
   final double durationSec;
 
-  // Igualdade por valor: evita rebuild da capa/título a cada state-update.
   @override
   bool operator ==(Object other) =>
       other is TrackInfo &&
