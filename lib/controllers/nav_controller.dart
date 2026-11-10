@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../services/map_service.dart';
 
 class NavController extends ChangeNotifier {
+  ValueListenable<String> get gpsStatus => _service.status;
   NavController(this._service);
 
   final MapService _service;

@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:window_manager/window_manager.dart';
 
 import 'controllers/nav_controller.dart';
 import 'controllers/player_controller.dart';
@@ -16,25 +13,9 @@ import 'services/radio_service.dart';
 import 'views/dashboard_view.dart';
 
 const bool kMockPlayer = bool.fromEnvironment('MOCK_PLAYER');
-const bool kFrameless = bool.fromEnvironment('FRAMELESS');
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    await windowManager.ensureInitialized();
-    final options = WindowOptions(
-      size: const Size(1024, 600),
-      minimumSize: const Size(1024, 600),
-      center: true,
-      title: 'Car HMI',
-      titleBarStyle: kFrameless ? TitleBarStyle.hidden : TitleBarStyle.normal,
-    );
-    await windowManager.waitUntilReadyToShow(options, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
-  }
 
   final PlayerService playerService =
       kMockPlayer ? MockPlayerService() : YtmdPlayerService();

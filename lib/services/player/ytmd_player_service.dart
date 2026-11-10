@@ -26,12 +26,10 @@ class YtmdPlayerService implements PlayerService {
   final _ctrl = StreamController<PlayerState>.broadcast();
   PlayerState _state = const PlayerState();
   String? _token;
+  String? _memToken;
   io.Socket? _socket;
   Timer? _retry;
   bool _disposed = false;
-
-  // Persistência simples do token (no Linux final, use um caminho fixo do sistema).
-  static final _tokenFile = File('.ytmd_token');
 
   Uri _api(String path) => Uri.parse('http://$host:$port/api/v1$path');
   Map<String, String> get _json => {'Content-Type': 'application/json'};
@@ -57,13 +55,37 @@ class YtmdPlayerService implements PlayerService {
     }
   }
 
-  // ---------- Autenticação ----------
+  // ---------- Token (memória + arquivo quando a plataforma permitir) ----------
   Future<String?> _loadToken() async {
-    if (!await _tokenFile.exists()) return null;
-    final t = (await _tokenFile.readAsString()).trim();
-    return t.isEmpty ? null : t;
+    if (_memToken != null) return _memToken;
+    try {
+      final f = File('.ytmd_token');
+      if (await f.exists()) {
+        final t = (await f.readAsString()).trim();
+        if (t.isNotEmpty) return _memToken = t;
+      }
+    } catch (_) {
+      // Web: sem acesso a arquivo. O token fica só em memória.
+    }
+    return null;
   }
 
+  Future<void> _saveToken(String t) async {
+    _memToken = t;
+    try {
+      await File('.ytmd_token').writeAsString(t);
+    } catch (_) {}
+  }
+
+  Future<void> _clearToken() async {
+    _memToken = null;
+    try {
+      final f = File('.ytmd_token');
+      if (await f.exists()) await f.delete();
+    } catch (_) {}
+  }
+
+  // ---------- Autenticação ----------
   Future<String> _pair() async {
     _emit(_state.copyWith(message: 'Aprove o pareamento na janela do YTMD…'));
     final codeRes = await http
@@ -76,7 +98,7 @@ class YtmdPlayerService implements PlayerService {
             }))
         .timeout(const Duration(seconds: 5));
     if (codeRes.statusCode != 200) {
-      throw HttpException('requestcode ${codeRes.statusCode}');
+      throw Exception('requestcode ${codeRes.statusCode}');
     }
     final code = jsonDecode(codeRes.body)['code'] as String;
 
@@ -86,17 +108,17 @@ class YtmdPlayerService implements PlayerService {
             headers: _json, body: jsonEncode({'appId': appId, 'code': code}))
         .timeout(const Duration(seconds: 60));
     if (tokenRes.statusCode != 200) {
-      throw HttpException('request ${tokenRes.statusCode}');
+      throw Exception('request ${tokenRes.statusCode}');
     }
     final token = jsonDecode(tokenRes.body)['token'] as String;
-    await _tokenFile.writeAsString(token);
+    await _saveToken(token);
     return token;
   }
 
   Future<void> _resetAuth() async {
     _token = null;
     _socket?.dispose();
-    if (await _tokenFile.exists()) await _tokenFile.delete();
+    await _clearToken();
     await connect();
   }
 
@@ -186,7 +208,7 @@ class YtmdPlayerService implements PlayerService {
 
   @override
   Future<void> setVolume(int percent) {
-    _emit(_state.copyWith(volume: percent)); // otimista: UI responde na hora
+    _emit(_state.copyWith(volume: percent)); // otimista: a UI responde na hora
     return _command('setVolume', percent);
   }
 

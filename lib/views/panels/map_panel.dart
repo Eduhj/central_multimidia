@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -30,8 +28,9 @@ class MapPanel extends StatelessWidget {
               maxZoom: 19,
               onMapReady: nav.onMapReady,
               onPositionChanged: (camera, hasGesture) {
-                if (hasGesture)
+                if (hasGesture) {
                   nav.onUserGesture(); // arrastou = sai do "seguir"
+                }
               },
             ),
             children: [
@@ -66,19 +65,20 @@ class MapPanel extends StatelessWidget {
 
           // Velocidade
           Positioned(
-            top: 12,
+            top: 64,
             left: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.bg.withValues(alpha: .85),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Selector<NavController, double>(
-                selector: (_, n) => n.speedKmh.roundToDouble(),
-                builder: (_, v, __) => Text('${v.toInt()} km/h',
+            child: ValueListenableBuilder<String>(
+              valueListenable: nav.gpsStatus,
+              builder: (_, msg, __) => Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.bg.withValues(alpha: .85),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(msg,
                     style: const TextStyle(
-                        fontSize: 26, fontWeight: FontWeight.bold)),
+                        fontSize: 14, color: AppColors.textDim)),
               ),
             ),
           ),

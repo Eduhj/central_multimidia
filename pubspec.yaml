@@ -14,8 +14,7 @@ dependencies:
   socket_io_client: ^3.0.2   # tempo real do YTMD
   flutter_map: ^7.0.2        # mapa nativo (sem WebView)
   latlong2: ^0.9.1
-  window_manager: ^0.4.3     # janela 1024x600 no desktop
-
+  web: ^1.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapConfig {
@@ -16,10 +17,11 @@ class VehiclePosition {
   final double speedKmh;
 }
 
-/// Hoje: Mock. No Linux final: leitor de GPS (gpsd / NMEA serial).
+/// Fonte de posição do veículo. GPS real ou simulado.
 abstract class MapService {
   VehiclePosition get current;
   Stream<VehiclePosition> get positionStream;
+  ValueListenable<String> get status;
   void dispose();
 }
 
@@ -30,9 +32,11 @@ class MockMapService implements MapService {
 
   final _ctrl = StreamController<VehiclePosition>.broadcast();
   Timer? _timer;
-  // Ponto inicial genérico: troque para a sua região.
   double _lat = -23.5505, _lng = -46.6333, _heading = 45;
   static const _speed = 15.0; // m/s ≈ 54 km/h
+
+  @override
+  final ValueNotifier<String> status = ValueNotifier('Posição simulada');
 
   @override
   VehiclePosition get current =>
@@ -53,5 +57,6 @@ class MockMapService implements MapService {
   void dispose() {
     _timer?.cancel();
     _ctrl.close();
+    status.dispose();
   }
 }
