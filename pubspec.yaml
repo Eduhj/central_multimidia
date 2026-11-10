@@ -1,0 +1,25 @@
+name: car_hmi
+description: Central multimídia automotiva (HMI) em Flutter Desktop
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  http: ^1.2.2
+  socket_io_client: ^3.0.2   # tempo real do YTMD
+  flutter_map: ^7.0.2        # mapa nativo (sem WebView)
+  latlong2: ^0.9.1
+  window_manager: ^0.4.3     # janela 1024x600 no desktop
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
