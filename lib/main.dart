@@ -6,6 +6,7 @@ import 'controllers/player_controller.dart';
 import 'controllers/radio_controller.dart';
 import 'core/app_theme.dart';
 import 'services/map_service.dart';
+import 'services/music_search_service.dart';
 import 'services/player/mock_player_service.dart';
 import 'services/player/player_service.dart';
 import 'services/player/ytmd_player_service.dart';
@@ -13,6 +14,7 @@ import 'services/radio_service.dart';
 import 'views/dashboard_view.dart';
 
 const bool kMockPlayer = bool.fromEnvironment('MOCK_PLAYER');
+const String kYouTubeApiKey = String.fromEnvironment('YOUTUBE_API_KEY');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +26,10 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-            create: (_) => PlayerController(playerService)..init()),
+            create: (_) => PlayerController(
+                  playerService,
+                  YouTubeMusicSearchService(apiKey: kYouTubeApiKey),
+                )..init()),
         ChangeNotifierProvider(
             create: (_) => RadioController(MockRadioService())),
         ChangeNotifierProvider(

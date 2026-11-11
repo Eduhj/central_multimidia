@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 
 import 'package:car_hmi/controllers/player_controller.dart';
 import 'package:car_hmi/controllers/radio_controller.dart';
+import 'package:car_hmi/models/music_search_result.dart';
 import 'package:car_hmi/models/player_state.dart';
 import 'package:car_hmi/services/radio_service.dart';
 import 'package:car_hmi/views/panels/player_panel.dart';
 import 'package:car_hmi/views/panels/radio_panel.dart';
+import 'package:car_hmi/views/panels/reverse_camera_panel.dart';
 import 'package:car_hmi/views/widgets/big_button.dart';
 import 'package:car_hmi/views/widgets/top_bar.dart';
 import 'package:car_hmi/views/widgets/volume_bar.dart';
@@ -59,7 +61,8 @@ void main() {
 
   testWidgets('TopBar reports tab selection and player connection',
       (tester) async {
-    final controller = PlayerController(FakePlayerService());
+    final controller =
+        PlayerController(FakePlayerService(), FakeMusicSearchService());
     addTearDown(controller.dispose);
     var selectedTab = -1;
 
@@ -74,16 +77,46 @@ void main() {
 
     expect(find.text('Música'), findsOneWidget);
     expect(find.text('Rádio'), findsOneWidget);
+    expect(find.text('Ré'), findsOneWidget);
     expect(find.byTooltip('Player offline'), findsOneWidget);
 
     await tester.tap(find.text('Rádio'));
     expect(selectedTab, 1);
+    await tester.tap(find.text('Ré'));
+    expect(selectedTab, 2);
+  });
+
+  testWidgets('ReverseCameraPanel clearly displays a simulated camera',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 800,
+          height: 600,
+          child: ReverseCameraPanel(),
+        ),
+      ),
+    ));
+
+    expect(find.text('CÂMERA DE RÉ'), findsOneWidget);
+    expect(find.text('SIMULAÇÃO • SEM CÂMERA CONECTADA'), findsOneWidget);
+    expect(
+      find.text('Imagem ilustrativa — não representa vídeo ao vivo'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('PlayerPanel reflects state and forwards transport controls',
       (tester) async {
     final service = FakePlayerService();
-    final controller = PlayerController(service);
+    final searchService = FakeMusicSearchService();
+    const result = MusicSearchResult(
+      videoId: 'video-123',
+      title: 'Resultado da busca',
+      artist: 'Artista pesquisado',
+    );
+    searchService.results = const [result];
+    final controller = PlayerController(service, searchService);
     addTearDown(controller.dispose);
     controller.init();
 
@@ -120,6 +153,19 @@ void main() {
     await tester.pump();
 
     expect(service.commands, ['playPause', 'previous', 'next']);
+
+    await tester.tap(find.byTooltip('Pesquisar músicas'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'artista pesquisado');
+    await tester.tap(find.byTooltip('Buscar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Resultado da busca'), findsOneWidget);
+    await tester.tap(find.byTooltip('Reproduzir Resultado da busca'));
+    await tester.pumpAndSettle();
+
+    expect(service.playedTracks, [result]);
+    expect(find.text('Pesquisar músicas'), findsNothing);
   });
 
   testWidgets('RadioPanel changes band, tunes and controls power/volume',

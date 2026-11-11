@@ -1,4 +1,5 @@
 import '../../../models/player_state.dart';
+import '../../models/music_search_result.dart';
 
 /// Contrato único. Implementações: YTMD (agora), Mopidy / MPRIS (Linux) depois.
 abstract class PlayerService {
@@ -9,5 +10,6 @@ abstract class PlayerService {
   Future<void> previous();
   Future<void> setVolume(int percent);
   Future<void> seekTo(double seconds);
+  Future<void> playTrack(MusicSearchResult track);
   Future<void> dispose();
 }

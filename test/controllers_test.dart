@@ -6,8 +6,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:car_hmi/controllers/nav_controller.dart';
 import 'package:car_hmi/controllers/player_controller.dart';
 import 'package:car_hmi/controllers/radio_controller.dart';
+import 'package:car_hmi/models/music_search_result.dart';
 import 'package:car_hmi/models/player_state.dart';
 import 'package:car_hmi/services/map_service.dart';
+import 'package:car_hmi/services/music_search_service.dart';
 import 'package:car_hmi/services/radio_service.dart';
 
 import 'support/fakes.dart';
@@ -15,12 +17,14 @@ import 'support/fakes.dart';
 void main() {
   group('PlayerController', () {
     late FakePlayerService service;
+    late FakeMusicSearchService searchService;
     late PlayerController controller;
     var disposed = false;
 
     setUp(() {
       service = FakePlayerService();
-      controller = PlayerController(service);
+      searchService = FakeMusicSearchService();
+      controller = PlayerController(service, searchService);
       disposed = false;
     });
 
@@ -68,6 +72,65 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(service.disposed, isTrue);
+      expect(searchService.disposed, isTrue);
+    });
+
+    test('searches normalized queries and plays a selected result', () async {
+      const result = MusicSearchResult(
+        videoId: 'video-123',
+        title: 'Canção',
+        artist: 'Artista',
+      );
+      searchService.results = const [result];
+
+      await controller.searchTracks('  Canção  ');
+      expect(searchService.queries, ['Canção']);
+      expect(controller.searchResults, [result]);
+      expect(controller.isSearching, isFalse);
+      expect(controller.searchError, isNull);
+
+      await controller.playSearchResult(result);
+      expect(service.playedTracks, [result]);
+    });
+
+    test('reports empty queries and search errors to the interface', () async {
+      final pendingSearch = Completer<List<MusicSearchResult>>();
+      searchService.searchCompleter = pendingSearch;
+      final pendingRequest = controller.searchTracks('consulta em andamento');
+      await controller.searchTracks('   ');
+      expect(controller.searchError, 'Digite o nome de uma música ou artista.');
+      pendingSearch.complete(const []);
+      await pendingRequest;
+      expect(controller.searchError, 'Digite o nome de uma música ou artista.');
+
+      searchService.searchCompleter = null;
+      expect(searchService.queries, ['consulta em andamento']);
+
+      searchService.error = const MusicSearchException('Cota excedida.');
+      await controller.searchTracks('artista');
+      expect(controller.searchError, 'Cota excedida.');
+      expect(controller.isSearching, isFalse);
+    });
+
+    test('ignores stale results when a newer search finishes first', () async {
+      final olderSearch = Completer<List<MusicSearchResult>>();
+      final newerSearch = Completer<List<MusicSearchResult>>();
+      searchService.searchCompleter = olderSearch;
+      final olderRequest = controller.searchTracks('antiga');
+
+      searchService.searchCompleter = newerSearch;
+      final newerRequest = controller.searchTracks('nova');
+      const latest = MusicSearchResult(
+        videoId: 'latest',
+        title: 'Resultado atual',
+        artist: 'Artista',
+      );
+      newerSearch.complete(const [latest]);
+      await newerRequest;
+
+      olderSearch.complete(const []);
+      await olderRequest;
+      expect(controller.searchResults, const [latest]);
     });
   });
 

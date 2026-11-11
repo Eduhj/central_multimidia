@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../models/music_search_result.dart';
 import '../../models/player_state.dart';
 import 'player_service.dart';
 
@@ -76,6 +77,20 @@ class MockPlayerService implements PlayerService {
   @override
   Future<void> seekTo(double seconds) async =>
       _emit(_s.copyWith(positionSec: seconds));
+
+  @override
+  Future<void> playTrack(MusicSearchResult track) async => _emit(
+        _s.copyWith(
+          track: TrackInfo(
+            title: track.title,
+            artist: track.artist,
+            artUrl: track.thumbnailUrl,
+          ),
+          status: PlaybackStatus.playing,
+          positionSec: 0,
+          connected: true,
+        ),
+      );
 
   @override
   Future<void> dispose() async {

@@ -21,14 +21,16 @@ class TopBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            const SizedBox(width: 90, child: ClockText()),
+            const SizedBox(width: 70, child: ClockText()),
             const Spacer(),
             _tab(0, Icons.music_note, 'Música'),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             _tab(1, Icons.radio, 'Rádio'),
+            const SizedBox(width: 8),
+            _tab(2, Icons.camera_rear, 'Ré'),
             const Spacer(),
             const SizedBox(
-                width: 90,
+                width: 70,
                 child: Align(
                     alignment: Alignment.centerRight,
                     child: _PlayerStatusDot())),
@@ -39,7 +41,7 @@ class TopBar extends StatelessWidget {
   }
 
   Widget _tab(int i, IconData icon, String label) => BigButton(
-        width: 170,
+        width: 160,
         height: 48,
         selected: tab == i,
         onPressed: () => onTab(i),

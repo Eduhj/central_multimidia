@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'panels/map_panel.dart';
 import 'panels/player_panel.dart';
 import 'panels/radio_panel.dart';
+import 'panels/reverse_camera_panel.dart';
 import 'widgets/top_bar.dart';
 
 class DashboardView extends StatefulWidget {
@@ -13,7 +14,7 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  int _tab = 0; // 0 = Música, 1 = Rádio
+  int _tab = 0; // Música, Rádio ou câmera de ré simulada
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +32,14 @@ class _DashboardViewState extends State<DashboardView> {
                     const SizedBox(width: 10),
                     Expanded(
                       flex: 9,
-                      // IndexedStack mantém o estado dos dois painéis vivos.
+                      // IndexedStack mantém os painéis montados ao trocar de aba.
                       child: IndexedStack(
                         index: _tab,
-                        children: const [PlayerPanel(), RadioPanel()],
+                        children: const [
+                          PlayerPanel(),
+                          RadioPanel(),
+                          ReverseCameraPanel(),
+                        ],
                       ),
                     ),
                   ],

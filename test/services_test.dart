@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:car_hmi/models/music_search_result.dart';
 import 'package:car_hmi/models/player_state.dart';
 import 'package:car_hmi/services/gps_map_service.dart';
 import 'package:car_hmi/services/map_service.dart';
@@ -111,6 +112,16 @@ void main() {
       await service.next();
       await service.previous();
       await service.seekTo(12.5);
+      expect(
+        () => service.playTrack(
+          const MusicSearchResult(
+            videoId: 'video-1',
+            title: 'Faixa',
+            artist: 'Artista',
+          ),
+        ),
+        throwsStateError,
+      );
       await service.dispose();
     });
   });

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import '../../models/music_search_result.dart';
 import '../../models/player_state.dart';
 import 'player_service.dart';
 
@@ -183,7 +184,20 @@ class YtmdPlayerService implements PlayerService {
 
   // ---------- Comandos ----------
   Future<void> _command(String command, [Object? data]) async {
-    if (_token == null) return;
+    await _sendCommand(command, data, reportErrors: false);
+  }
+
+  Future<void> _sendCommand(
+    String command,
+    Object? data, {
+    required bool reportErrors,
+  }) async {
+    if (_token == null) {
+      if (reportErrors) {
+        throw StateError('YTMD não está autenticado.');
+      }
+      return;
+    }
     try {
       final res = await http
           .post(_api('/command'),
@@ -191,8 +205,19 @@ class YtmdPlayerService implements PlayerService {
               body: jsonEncode(
                   {'command': command, if (data != null) 'data': data}))
           .timeout(const Duration(seconds: 3));
-      if (res.statusCode == 401) await _resetAuth();
-    } catch (_) {
+      if (res.statusCode == 401) {
+        await _resetAuth();
+        if (reportErrors) {
+          throw StateError('A autorização do YTMD expirou. Conecte novamente.');
+        }
+      } else if (res.statusCode < 200 || res.statusCode >= 300) {
+        if (reportErrors) {
+          throw StateError(
+              'O YTMD recusou a reprodução (HTTP ${res.statusCode}).');
+        }
+      }
+    } catch (error) {
+      if (reportErrors) rethrow;
       // Offline: o socket reconecta sozinho e o estado volta a sincronizar.
     }
   }
@@ -205,6 +230,18 @@ class YtmdPlayerService implements PlayerService {
   Future<void> previous() => _command('previous');
   @override
   Future<void> seekTo(double seconds) => _command('seekTo', seconds);
+
+  @override
+  Future<void> playTrack(MusicSearchResult track) {
+    if (!_state.connected || _token == null) {
+      throw StateError('Conecte-se ao YTMD para reproduzir uma música.');
+    }
+    return _sendCommand(
+      'changeVideo',
+      {'videoId': track.videoId},
+      reportErrors: true,
+    );
+  }
 
   @override
   Future<void> setVolume(int percent) {

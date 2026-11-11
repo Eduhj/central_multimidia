@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:car_hmi/models/player_state.dart';
+import 'package:car_hmi/models/music_search_result.dart';
 import 'package:car_hmi/services/map_service.dart';
+import 'package:car_hmi/services/music_search_service.dart';
 import 'package:car_hmi/services/player/player_service.dart';
 import 'package:car_hmi/services/radio_service.dart';
 
@@ -13,6 +15,7 @@ class FakePlayerService implements PlayerService {
   final commands = <String>[];
   final volumes = <int>[];
   final seekPositions = <double>[];
+  final playedTracks = <MusicSearchResult>[];
   int connectCalls = 0;
   bool disposed = false;
 
@@ -40,9 +43,36 @@ class FakePlayerService implements PlayerService {
   Future<void> seekTo(double seconds) async => seekPositions.add(seconds);
 
   @override
+  Future<void> playTrack(MusicSearchResult track) async =>
+      playedTracks.add(track);
+
+  @override
   Future<void> dispose() async {
     disposed = true;
     await states.close();
+  }
+}
+
+class FakeMusicSearchService implements MusicSearchService {
+  final queries = <String>[];
+  List<MusicSearchResult> results = const [];
+  Object? error;
+  bool disposed = false;
+  Completer<List<MusicSearchResult>>? searchCompleter;
+
+  @override
+  Future<List<MusicSearchResult>> search(String query) {
+    queries.add(query);
+    final completer = searchCompleter;
+    if (completer != null) return completer.future;
+    final searchError = error;
+    if (searchError != null) return Future.error(searchError);
+    return Future.value(results);
+  }
+
+  @override
+  Future<void> dispose() async {
+    disposed = true;
   }
 }
 
